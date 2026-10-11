@@ -220,6 +220,17 @@ def get_neglected_areas():
     }
 
 # Mount static files for web dashboard
+from fastapi.responses import FileResponse
+
 STATIC_DIR = Path(__file__).resolve().parent.parent.parent / "static"
+
+@app.get("/")
+def read_root():
+    """Serves the main operations dashboard."""
+    index_file = STATIC_DIR / "index.html"
+    if index_file.exists():
+        return FileResponse(index_file)
+    return {"message": "AquaStrands API is active. Static UI files not found."}
+
 if STATIC_DIR.exists():
     app.mount("/", StaticFiles(directory=str(STATIC_DIR), html=True), name="static")

@@ -8,9 +8,9 @@ from src.config import settings
 
 def open_browser():
     time.sleep(1.2)
-    webbrowser.open(f"http://{settings.HOST}:{settings.PORT}")
+    webbrowser.open(f"http://127.0.0.1:{settings.PORT}")
 
 if __name__ == "__main__":
-    print(f"Starting {settings.APP_NAME} on http://{settings.HOST}:{settings.PORT}...")
+    print(f"Starting {settings.APP_NAME} on http://127.0.0.1:{settings.PORT}...")
     threading.Thread(target=open_browser, daemon=True).start()
     uvicorn.run("src.api.app:app", host=settings.HOST, port=settings.PORT, reload=False)

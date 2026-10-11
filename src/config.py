@@ -9,7 +9,7 @@ class Settings(BaseModel):
     VERSION: str = "1.0.0"
     DEBUG: bool = True
     PORT: int = int(os.getenv("PORT", "8000"))
-    HOST: str = os.getenv("HOST", "127.0.0.1")
+    HOST: str = os.getenv("HOST", "0.0.0.0")
 
     # Default Depot Coordinates (Central Municipal Water Filling Station)
     DEPOT_COORDS: Tuple[float, float] = (19.0760, 72.8777)
