@@ -3,107 +3,196 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Heatwave-Aware Water Tanker Routing Agent</title>
-  <!-- Google Fonts & Leaflet CSS -->
+  <title>AquaStrands — Heatwave-Aware Water Tanker Routing Command Center</title>
+  <meta name="description" content="Autonomous, explainable water tanker dispatching and routing platform governed by Amazon Cedar security policies and AWS Strands agentic reasoning.">
+  
+  <!-- Modern Google Fonts & Leaflet CSS -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- Top Navigation & Heatwave Alert Bar -->
+  <!-- Top Navigation & Crisis Telemetry Bar -->
   <header class="app-header">
     <div class="header-left">
       <div class="logo-badge">
-        <span class="icon">💧</span>
+        <div class="logo-icon-wrapper">
+          <span class="icon">💧</span>
+        </div>
         <div>
           <h1>AquaStrands Dispatch</h1>
-          <span class="subtitle">Heatwave-Aware Water Tanker Routing Agent</span>
+          <span class="subtitle">Heatwave-Aware Routing Agent</span>
         </div>
       </div>
     </div>
 
-    <!-- Active Heatwave Alert Pill -->
-    <div class="heatwave-pill active">
+    <!-- Active Heatwave Emergency Pill -->
+    <div class="heatwave-pill" id="heatwave-status-pill">
       <span class="pulsing-dot"></span>
-      <span class="pill-text"><strong>HEATWAVE SEVERE ALERT:</strong> 44.5°C | Heat Index 47.0°C</span>
+      <span class="pill-text"><strong>HEATWAVE EMERGENCY:</strong> 44.5°C | Heat Index 47.0°C</span>
     </div>
 
-    <!-- Active Role Switcher -->
-    <div class="role-selector-container">
-      <label for="role-select">Active Role (Cedar ABAC):</label>
-      <select id="role-select" onchange="onRoleChange(this.value)">
-        <option value="Dispatcher">Dispatcher (Operations)</option>
-        <option value="WardOfficer">Ward Officer (Ward L / GN)</option>
-        <option value="Resident">Resident (Community)</option>
-        <option value="Auditor">Auditor (Public Fairness)</option>
-      </select>
-    </div>
+    <!-- Segmented Role Selector (Cedar ABAC) -->
+    <nav class="role-tabs-container" aria-label="Operational Role Selection">
+      <button class="role-tab active" id="tab-dispatcher" onclick="switchRole('Dispatcher')">
+        <span>🚚</span> Dispatcher
+      </button>
+      <button class="role-tab" id="tab-wardofficer" onclick="switchRole('WardOfficer')">
+        <span>🛡️</span> Ward Officer
+      </button>
+      <button class="role-tab" id="tab-resident" onclick="switchRole('Resident')">
+        <span>👥</span> Resident
+      </button>
+      <button class="role-tab" id="tab-auditor" onclick="switchRole('Auditor')">
+        <span>⚖️</span> Auditor
+      </button>
+    </nav>
   </header>
+
+  <!-- Live KPI Telemetry Strip -->
+  <section class="kpi-strip" aria-label="Mission Critical Telemetry">
+    <div class="kpi-card" id="kpi-heat">
+      <div class="kpi-icon heat">🔥</div>
+      <div class="kpi-content">
+        <span class="kpi-label">Peak Heat Index</span>
+        <span class="kpi-value" id="kpi-val-heat">47.0°C</span>
+        <span class="kpi-sub"><span class="kpi-tag danger">CRITICAL</span> 62% Rel Humidity</span>
+      </div>
+    </div>
+
+    <div class="kpi-card" id="kpi-deficit">
+      <div class="kpi-icon water">💧</div>
+      <div class="kpi-content">
+        <span class="kpi-label">Emergency Water Deficit</span>
+        <span class="kpi-value" id="kpi-val-deficit">36,000 L</span>
+        <span class="kpi-sub"><span class="kpi-tag info">DEMAND</span> 5 Wards Reporting</span>
+      </div>
+    </div>
+
+    <div class="kpi-card" id="kpi-fleet">
+      <div class="kpi-icon fleet">🚚</div>
+      <div class="kpi-content">
+        <span class="kpi-label">Fleet Readiness</span>
+        <span class="kpi-value" id="kpi-val-fleet">4 / 4 Active</span>
+        <span class="kpi-sub"><span class="kpi-tag success">READY</span> 44,000L Fleet Capacity</span>
+      </div>
+    </div>
+
+    <div class="kpi-card" id="kpi-equity">
+      <div class="kpi-icon equity">⚖️</div>
+      <div class="kpi-content">
+        <span class="kpi-label">Equity & Fairness Audit</span>
+        <span class="kpi-value" id="kpi-val-inversions">0 Inversions</span>
+        <span class="kpi-sub"><span class="kpi-tag success">CEDAR VERIFIED</span> ABAC Guardrails</span>
+      </div>
+    </div>
+  </section>
 
   <!-- Main Content Grid -->
   <main class="dashboard-grid">
     <!-- Left Column: Map & Route Explorer -->
-    <section class="map-section card">
+    <section class="map-section card" aria-label="Metropolitan GIS Navigation">
       <div class="card-header">
         <div class="title-wrap">
-          <h2>Metropolitan Water Supply & Tanker Grid</h2>
-          <span class="badge" id="fleet-badge">4 Tankers Available</span>
+          <h2><span>🗺️</span> Metropolitan Water Supply & Tanker Grid</h2>
+          <span class="badge badge-accent" id="fleet-badge">4 Tankers Dispatched</span>
         </div>
         <div class="map-controls">
-          <button class="btn btn-secondary btn-sm" onclick="fetchState()">Refresh Grid</button>
-          <button class="btn btn-danger btn-sm" id="btn-breakdown" onclick="simulateBreakdown()">🚨 Simulate Tanker Breakdown</button>
-          <button class="btn btn-secondary btn-sm" onclick="resetFleet()">Reset Fleet</button>
+          <button class="btn btn-secondary btn-sm" id="btn-refresh" onclick="fetchState()" title="Sync live grid state">
+            <span>🔄</span> Refresh
+          </button>
+          <button class="btn btn-danger btn-sm" id="btn-breakdown" onclick="simulateBreakdown()" title="Simulate mid-route tanker failure">
+            <span>🚨</span> Test Breakdown
+          </button>
+          <button class="btn btn-secondary btn-sm" id="btn-reset" onclick="resetFleet()" title="Restore fleet baseline">
+            <span>⏪</span> Reset
+          </button>
         </div>
       </div>
-      <div id="map" class="map-container"></div>
+
+      <!-- Leaflet Map Container -->
+      <div id="map" class="map-container" role="region" aria-label="Interactive Map of Wards and Tankers"></div>
       
       <!-- Live Route Stop Sequence Viewer -->
       <div class="route-details-panel" id="route-details-panel">
-        <h3>Active Dispatch Routes & Stop Justifications</h3>
+        <h3>
+          <span>Active Dispatch Routes & Stop Justifications</span>
+          <span class="badge badge-accent" id="routes-status-badge">Awaiting Optimization</span>
+        </h3>
         <div id="routes-container" class="routes-container">
-          <p class="placeholder-text">Click "Run Strands Agent Dispatch" to calculate priority-ordered routes.</p>
+          <p class="placeholder-text" style="color:var(--text-muted);font-size:0.8rem;text-align:center;padding:1.5rem;">
+            Click <strong>"Run Strands Agent Dispatch"</strong> to generate priority-ordered, capacity-constrained routes.
+          </p>
         </div>
       </div>
     </section>
 
     <!-- Right Column: Priority Ranking, Strands Agent & Role Actions -->
     <aside class="sidebar-section">
-      <!-- Role Control Actions Panel -->
-      <div class="card role-action-card" id="role-action-card">
+      <!-- Role Control Actions Panel (Cedar ABAC) -->
+      <section class="card role-action-card" id="role-action-card" aria-label="Role Action Center">
         <div class="card-header">
-          <h2 id="role-card-title">Dispatcher Operations Control</h2>
-          <span class="cedar-tag">Cedar Authorized</span>
+          <h2 id="role-card-title"><span>🛡️</span> Dispatcher Operations Control</h2>
+          <span class="cedar-tag" id="role-cedar-badge">Cedar Authorized</span>
         </div>
         <div class="role-body" id="role-body">
           <!-- Dynamic Role Form injected by app.js -->
         </div>
-      </div>
+      </section>
 
-      <!-- Strands Agent Reasoning Console -->
-      <div class="card agent-card">
+      <!-- Strands Agent Reasoning Console & Pipeline -->
+      <section class="card agent-card" aria-label="Strands Agent Pipeline">
         <div class="card-header">
           <div class="title-wrap">
-            <h2>Strands Agent Reasoning Console</h2>
-            <span class="badge badge-accent">Model & Tools</span>
+            <h2><span>🤖</span> Strands Agent Reasoning Loop</h2>
+            <span class="badge badge-accent">Autonomous Planner</span>
           </div>
-          <button class="btn btn-primary btn-sm" id="btn-run-agent" onclick="runAgentDispatch()">Run Strands Agent</button>
+          <button class="btn btn-primary btn-sm" id="btn-run-agent" onclick="runAgentDispatch()">
+            <span>⚡</span> Run Strands Agent
+          </button>
         </div>
-        <div class="agent-console" id="agent-console">
+
+        <!-- 5-Step Agent Execution Pipeline -->
+        <div class="pipeline-steps" id="pipeline-steps" aria-label="Agent reasoning stages">
+          <div class="step-node done" id="step-1">
+            <span class="step-dot"></span>
+            <span>1. Telemetry</span>
+          </div>
+          <div class="step-node done" id="step-2">
+            <span class="step-dot"></span>
+            <span>2. Cedar Gate</span>
+          </div>
+          <div class="step-node active" id="step-3">
+            <span class="step-dot"></span>
+            <span>3. Priority</span>
+          </div>
+          <div class="step-node" id="step-4">
+            <span class="step-dot"></span>
+            <span>4. VRP Plan</span>
+          </div>
+          <div class="step-node" id="step-5">
+            <span class="step-dot"></span>
+            <span>5. Audited</span>
+          </div>
+        </div>
+
+        <!-- Terminal Console -->
+        <div class="agent-console" id="agent-console" role="log" aria-live="polite">
           <div class="log-entry system-msg">
-            <span class="timestamp">[SYSTEM READY]</span> Strands Agent initialized with tools: <code>get_forecast</code>, <code>get_requests</code>, <code>get_fleet</code>, <code>compute_priority</code>, <code>plan_routes</code>.
+            <span class="timestamp">[INIT]</span> Strands Agent initialized with tools: <code>get_forecast</code>, <code>get_requests</code>, <code>get_fleet</code>, <code>compute_priority</code>, <code>plan_routes</code>.
           </div>
           <div class="log-entry info-msg">
-            <span class="timestamp">[POLICY ENGINE]</span> Amazon Cedar RBAC & ABAC guardrails active.
+            <span class="timestamp">[POLICY]</span> Amazon Cedar RBAC & ABAC guardrails active and verified.
           </div>
         </div>
-      </div>
+      </section>
 
-      <!-- Live Priority Ranking Table -->
-      <div class="card ranking-card">
+      <!-- Live Explainable Priority Ranking Table -->
+      <section class="card ranking-card" aria-label="Priority Ranking Breakdown">
         <div class="card-header">
-          <h2>Explainable Priority Ranking Formula</h2>
+          <h2><span>🧮</span> Explainable Priority Ranking</h2>
           <span class="formula-label">w1·heat + w2·days + w3·vuln + w4·demand</span>
         </div>
         <div class="table-responsive">
@@ -113,31 +202,47 @@
                 <th>Area / Ward</th>
                 <th>Days Dry</th>
                 <th>Heat Index</th>
-                <th>Priority</th>
-                <th>Action</th>
+                <th>Priority Score</th>
+                <th>Analysis</th>
               </tr>
             </thead>
             <tbody id="priority-tbody">
-              <!-- Dynamically populated -->
+              <!-- Dynamically populated by app.js -->
             </tbody>
           </table>
         </div>
-      </div>
+      </section>
 
       <!-- OpenSearch Neglected Areas & Equity Analytics -->
-      <div class="card analytics-card">
+      <section class="card analytics-card" aria-label="OpenSearch Equity Audit">
         <div class="card-header">
-          <h2>OpenSearch Equity & Neglected Areas</h2>
-          <span class="badge badge-warning">Audit Query</span>
+          <h2><span>⚖️</span> OpenSearch Equity & Neglected Areas</h2>
+          <span class="badge badge-warning">Fairness Query</span>
         </div>
         <div class="analytics-body" id="analytics-body">
           <div id="neglected-list" class="neglected-list">
             <!-- Dynamically populated from OpenSearch query -->
           </div>
         </div>
-      </div>
+      </section>
     </aside>
   </main>
+
+  <!-- Interactive Explainability Formula Modal -->
+  <div class="modal-overlay" id="explain-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 id="modal-title">Explainable Priority Breakdown</h3>
+        <button class="modal-close-btn" onclick="closeExplainModal()" aria-label="Close modal">&times;</button>
+      </div>
+      <div id="modal-content">
+        <!-- Injected dynamically by app.js -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notifications Container -->
+  <div id="toast-container" aria-live="assertive"></div>
 
   <!-- Leaflet JS and App JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
